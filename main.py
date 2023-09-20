@@ -1,13 +1,15 @@
 import sys
+from pynput import keyboard
 from PyQt5.QtWidgets import QApplication, QWidget,QLineEdit,QTextEdit,QTextBrowser, QComboBox, QMainWindow, QLabel, QPushButton,QHBoxLayout, QVBoxLayout, \
     QFormLayout, QCheckBox
 from PyQt5.QtGui import QCursor, QIcon, QMouseEvent, QPixmap, QFont, QIntValidator, QDoubleValidator
 
-from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtCore import Qt, QSize, QTimer
 import pyautogui
 import time
+import threading
 
-pyautogui.FAILSAFE = False
+pyautogui.FAILSAFE = True
 
 
 class CursorTracker(QMainWindow):
@@ -44,7 +46,17 @@ class CursorTracker(QMainWindow):
         self.exitByKey = False
         self.firstMouseClickDone = False
         self.clickedOnbtn=False
+        self.apppaused = False
+        self.listener=None
+
+
+        # Create a keyboard listener thread
+        self.keyboard_listener_thread = threading.Thread(target=self.start_keyboard_listener)
+        self.keyboard_listener_thread.daemon = True
+        self.keyboard_listener_thread.start()
+
         self.initUi()
+
 
 
 
@@ -68,13 +80,10 @@ class CursorTracker(QMainWindow):
         self.button1.setStyleSheet(self.style_button)
         self.button1.setFont(self.button_font)
 
-
         self.Hlayout1.setAlignment(Qt.AlignCenter)
 
-
-
         self.Hlayout1.addWidget(self.button1)
-        self.layout_main.addLayout(self.Hlayout1)
+
 
         self.label2 = QLabel(self)
         self.label2.setGeometry(50, 50, 300, 30)
@@ -105,7 +114,7 @@ class CursorTracker(QMainWindow):
         self.label3.setText("Select the amount of delay in seconds ")
         self.label3.setFont(self.new_font)
         self.Hlayout1.addWidget(self.label3)
-        self.layout_main.addLayout(self.Hlayout1)
+
 
         self.combo_box2 = QComboBox()
         self.combo_box2.addItems(
@@ -137,8 +146,17 @@ class CursorTracker(QMainWindow):
         self.label5.setText("Status")
         self.label5.setAlignment(Qt.AlignCenter)
         self.Hlayout2.addWidget(self.label5)
-        self.layout_main.addLayout(self.Hlayout1)
-        self.layout_main.addLayout(self.Hlayout2)
+        # ----------------------------------------------key combo box---------------
+        self.combo_box_A=QComboBox()
+        self.combo_box_A.addItems(["before","after"])
+        self.Hlayout1.addWidget(self.combo_box_A)
+
+
+
+
+
+
+
 
         self.checkbox1 = QCheckBox("Reset Position")
         self.checkbox1.stateChanged.connect(self.updateValues)
@@ -149,9 +167,14 @@ class CursorTracker(QMainWindow):
         self.label6.setGeometry(50, 50, 300, 30)
         self.label6.setStyleSheet(self.style_footer)
         self.label6.setFont(self.status_font)
-        self.label6.setText("Press Esc to exit from the programme\n Tick the Reset position option to make a new selection")
+        self.label6.setText("Press Esc to exit from the programme and to stop clicker press F4\n Tick the Reset-position option to make a new selection")
         self.label6.setAlignment(Qt.AlignCenter)
         self.Hlayout2.addWidget(self.label6)
+
+
+
+
+
 
         self.footer_layout=QHBoxLayout()
         self.label7 = QLabel(self)
@@ -161,26 +184,29 @@ class CursorTracker(QMainWindow):
         self.label7.setStyleSheet(self.style_footer)
         self.label7.setPixmap(self.pixmap)
 
-
-
-
-
         self.label7.setAlignment(Qt.AlignCenter)
 
         self.footer_layout.addWidget(self.label7)
         self.label8=QTextEdit(self)
         self.label8.ensureCursorVisible()
         self.label8.setGeometry(50, 50, 300, 30)
-        self.label8.setText("Please visit our web site to download more useful applications and services <a href='http//:www.goldenpixelit.com'>www.goldenpixelit.com</a> if you have request or projects contact us vai <a href>rvdistributes@gmail.com</a>\nAuthor name: vimukthi Ekanayake\nApp name : Mouse Automate\nversion :v0.1.2</a>")
-        # self.label8.setOpenExternalLinks(True)
+        self.label8.setText("<b>Please visit our web site to download more useful applications and services <a href='http//:www.goldenpixelit.com'>www.goldenpixelit.com</a> if you have request or projects contact us via <a href>rvdistributes@gmail.com</a></b><br>Author name: vimukthi Ekanayake<br>App name : Mouse Automate<br>version :v0.1.2")
         self.label8.setStyleSheet(self.style_footer)
         self.label8.setReadOnly(True)
         self.label8.setFont(self.footer_font)
         self.footer_layout.addWidget(self.label8)
+
+
+
+        self.layout_main.addLayout(self.Hlayout1)
+        self.layout_main.addLayout(self.Hlayout2)
         self.layout_main.addLayout(self.footer_layout)
-
-
         self.central_widget.setLayout(self.layout_main)
+
+
+
+
+
 
     def set_Position_window(self):
         self.selected_position = None
@@ -193,24 +219,40 @@ class CursorTracker(QMainWindow):
 
 
 
+    def start_keyboard_listener(self):
+        def on_key_press(key):
+            try:
+                # Print the key that was pressed
+                print(f'Key pressed: {key}')
+                print(f'Key pressed: {str(key)}')
+                if key == keyboard.Key.f4:
+                    self.apppaused=True
+
+                    self.label5.setText("task  cancelled by user...")
 
 
+                elif key == keyboard.Key.esc:
 
+                    print("Program exit by user")
+                    self.label5.setText("Program exit by user")
+                    QApplication.exit()
+                else:
+                    print("invalid key input")
 
-    def keyPressEvent(self, event) -> None:
+            except AttributeError:
 
-        if event.key() == Qt.Key_Escape:
-            print("programme exit by user ")
-            QApplication.exit()
+                # Some keys don't have a char attribute (e.g., special keys)
+                print(f'Special key pressed: {key}')
 
-
-
+        # Create a keyboard listener
+        with keyboard.Listener(on_press=on_key_press) as listener:
+            listener.join()
 
     def mousePressEvent(self, event: QMouseEvent):
 
 
         try:
-            if event.button() == Qt.LeftButton and not  self.firstMouseClickDone and self.clickedOnbtn:
+            if event.button() == Qt.LeftButton and not  self.firstMouseClickDone and self.clickedOnbtn :
                 self.firstMouseClickDone = True
                 self.central_widget.show()
                 self.cursor_pos = QCursor.pos()
@@ -227,6 +269,8 @@ class CursorTracker(QMainWindow):
                 self.showNormal()
                 self.setCursor(Qt.ArrowCursor)
                 self.checkbox1.setCheckState(False)
+
+
             else:
                 print("not LeftButton or not firstMouseClick")
 
@@ -236,6 +280,7 @@ class CursorTracker(QMainWindow):
     def updateValues(self):
         self.count = self.combo_box1.currentText()
         self.delay = self.combo_box2.currentText()
+        self.firstMouseClickDone=False
         self.label5.setText(
             f"Mouse position: {'Not selected' if self.selected_position==None else self.selected_position} count: {self.count} delay: {self.delay}")
         if (self.checkbox1.isChecked()):
@@ -245,8 +290,12 @@ class CursorTracker(QMainWindow):
 
 
 
+
     def mouseClick(self):
+
         try:
+
+
             if self.selected_position:
 
                 # self.updateValues()
@@ -258,41 +307,47 @@ class CursorTracker(QMainWindow):
                 print(num_clicks)  # You can change this to the desired number of clicks
                 click_delay = float(self.delay)
                 print(self.delay)  # You can change this to the desired delay between clicks
-
-
+                self.label5.setText(f"task Starting.... ")
 
                 # Loop to perform the clicks
                 for turn in range(num_clicks):
-                    # QApplication.processEvents()
+
+                    self.updateValues()
                     self.setCursor(Qt.ClosedHandCursor)
                     pyautogui.click(x=target_x, y=target_y)
-                    print(
-                        f"{turn + 1} Times  Clicked at ({target_x}, {target_y}) with delay of {self.delay} and count {num_clicks}")
-                    self.label5.setText(
-                        f"{turn + 1} Times  Clicked at ({target_x}, {target_y}) with delay of {self.delay} and count {num_clicks}")
-                    time.sleep(click_delay)
+                    print(f"{turn + 1} Times  Clicked at ({target_x}, {target_y}) with delay of {self.delay} and count {num_clicks}")
                     self.button1.setDisabled(True)
                     self.button1.setStyleSheet(self.btnDisabledStyle)
 
+                    try:
+                        QTimer.singleShot(0, lambda: None)
+                        time.sleep(click_delay)
+                    except Exception as ex:
+                        print(ex)
+
+                    if self.apppaused == True:
+
+                        break
+                    else:
+                        pass
+
                 print("clicked done ")
+                self.label5.setText(
+                    f'task completed..{turn + 1} Times clicked with  count: {self.count} delay: {self.delay}')
+
                 self.setCursor(Qt.ArrowCursor)
-                self.updateValues()
                 self.button1.setDisabled(False)
                 self.button1.setStyleSheet(self.style)
                 self.firstMouseClickDone = False
                 self.selected_position=None
                 self.clickedOnbtn=False
-
-
-
             else:
-                print("at first select a position ")
-                self.label5.setText(f"at first select a position ")
-
+                print("At first select a position ")
+                self.label5.setText(f"At first select a position ")
 
         except Exception as error:
-
             print(error)
+
 
 
 
