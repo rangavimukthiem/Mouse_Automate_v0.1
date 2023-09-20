@@ -147,9 +147,7 @@ class CursorTracker(QMainWindow):
         self.label5.setAlignment(Qt.AlignCenter)
         self.Hlayout2.addWidget(self.label5)
         # ----------------------------------------------key combo box---------------
-        self.combo_box_A=QComboBox()
-        self.combo_box_A.addItems(["before","after"])
-        self.Hlayout1.addWidget(self.combo_box_A)
+
 
 
 
@@ -356,4 +354,5 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = CursorTracker()
     window.show()
+
     sys.exit(app.exec_())
