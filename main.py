@@ -296,7 +296,7 @@ class CursorTracker(QMainWindow):
 
             if self.selected_position:
 
-                # self.updateValues()
+                self.updateValues()
                 target_x, target_y = self.selected_position
 
                 # Set the number of clicks and the delay between clicks (in seconds)
@@ -305,33 +305,31 @@ class CursorTracker(QMainWindow):
                 print(num_clicks)  # You can change this to the desired number of clicks
                 click_delay = float(self.delay)
                 print(self.delay)  # You can change this to the desired delay between clicks
-                self.label5.setText(f"task Starting.... ")
+                self.label5.setText("task Starting.... ")
 
                 # Loop to perform the clicks
                 for turn in range(num_clicks):
 
-                    self.updateValues()
+
                     self.setCursor(Qt.ClosedHandCursor)
                     pyautogui.click(x=target_x, y=target_y)
-                    print(f"{turn + 1} Times  Clicked at ({target_x}, {target_y}) with delay of {self.delay} and count {num_clicks}")
+                    print(f"{turn + 1} Times  Clicked at ({target_x}, {target_y}) with delay of {click_delay} and count {num_clicks}"),
+
+
+                    self.label5.setText(f"{turn + 1} Times  Clicked at ({target_x}, {target_y}) with delay of {click_delay} and count {num_clicks}")
+
                     self.button1.setDisabled(True)
                     self.button1.setStyleSheet(self.btnDisabledStyle)
 
-                    try:
-                        QTimer.singleShot(0, lambda: None)
-                        time.sleep(click_delay)
-                    except Exception as ex:
-                        print(ex)
 
                     if self.apppaused == True:
-
+                        self.label5.setText("Programme stopped by user...")
                         break
-                    else:
-                        pass
+                    time.sleep(click_delay)
+
 
                 print("clicked done ")
-                self.label5.setText(
-                    f'task completed..{turn + 1} Times clicked with  count: {self.count} delay: {self.delay}')
+                self.label5.setText(f'task completed..{turn + 1} Times clicked with  count:{self.count} delay: {self.delay}')
 
                 self.setCursor(Qt.ArrowCursor)
                 self.button1.setDisabled(False)
@@ -339,6 +337,7 @@ class CursorTracker(QMainWindow):
                 self.firstMouseClickDone = False
                 self.selected_position=None
                 self.clickedOnbtn=False
+
             else:
                 print("At first select a position ")
                 self.label5.setText(f"At first select a position ")
